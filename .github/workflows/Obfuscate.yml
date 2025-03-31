@@ -25,9 +25,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm uninstall -g @cloudflare/wrangler  # 卸载旧版
-          npm install -g wrangler                # 安装最新版
-          npm install -g javascript-obfuscator   # 保持混淆工具
+          npm uninstall -g @cloudflare/wrangler
+          npm install -g wrangler
+          npm install -g javascript-obfuscator
 
       - name: Clone BPB workjs
         run: |
@@ -35,7 +35,7 @@ jobs:
 
       - name: Pre-optimize BPB worker js
         run: |
-          sed -i '/console.log/d' origin.js  # 示例优化，去除日志
+          sed -i '/console.log/d' origin.js
 
       - name: Obfuscate BPB worker js
         run: |
@@ -44,9 +44,15 @@ jobs:
           --identifier-names-generator hexadecimal \
           --rename-globals true
 
+      - name: Create wrangler.toml
+        run: |
+          echo 'name = "bpb-panel"' > wrangler.toml
+          echo 'compatibility_date = "2025-03-30"' >> wrangler.toml
+          echo 'main = "_worker.js"' >> wrangler.toml
+
       - name: Validate Worker
         run: |
-          npx wrangler deploy ./_worker.js --dry-run
+          npx wrangler deploy --dry-run
 
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
@@ -55,3 +61,4 @@ jobs:
           commit_message: ':arrow_up: update latest bpb panel'
           commit_author: 'github-actions[bot] <github-actions[bot]@users.noreply.github.com>'
           push_options: '--set-upstream'
+          file_pattern: '_worker.js wrangler.toml'
