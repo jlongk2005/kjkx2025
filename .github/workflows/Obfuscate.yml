@@ -32,8 +32,9 @@ jobs:
       - name: Clone and Modify BPB workjs
         run: |
           echo "Starting download..."
-          curl -v -o origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/refs/heads/main/build/unobfuscated-worker.js || { echo "Download failed"; exit 1; }
-          echo "Download complete, modifying file..."
+          curl -v -L -o origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/refs/heads/main/build/unobfuscated-worker.js
+          if [ $? -ne 0 ]; then echo "curl failed with exit code $?"; exit 1; fi
+          echo "Download complete, checking file..."
           ls -l origin.js
           if [ ! -s origin.js ]; then echo "origin.js is empty"; exit 1; fi
           echo "const dummyVar1 = 'randomString' + Math.random();" >> origin.js
@@ -63,7 +64,7 @@ jobs:
           npx wrangler deploy --dry-run
 
       - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: actions/checkout@v5
         with:
           branch: main
           commit_message: ':arrow_up: update latest bpb panel'
