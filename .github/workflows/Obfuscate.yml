@@ -25,7 +25,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install -g javascript-obfuscator @cloudflare/wrangler
+          npm uninstall -g @cloudflare/wrangler  # 卸载旧版
+          npm install -g wrangler                # 安装最新版
+          npm install -g javascript-obfuscator   # 保持混淆工具
 
       - name: Clone BPB workjs
         run: |
@@ -33,8 +35,7 @@ jobs:
 
       - name: Pre-optimize BPB worker js
         run: |
-          # 示例：简单移除全局 console.log（根据实际脚本调整）
-          sed -i '/console.log/d' origin.js
+          sed -i '/console.log/d' origin.js  # 示例优化，去除日志
 
       - name: Obfuscate BPB worker js
         run: |
@@ -45,7 +46,7 @@ jobs:
 
       - name: Validate Worker
         run: |
-          npx wrangler deploy --dry-run
+          npx wrangler deploy ./_worker.js --dry-run
 
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
