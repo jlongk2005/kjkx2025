@@ -1,11 +1,10 @@
-name: 构建混淆 BPB 面板
+name: Build Obfuscate BPB Panel
 
 on:
   push:
     branches:
       - main
   schedule:
-    # 每天凌晨 1:00 UTC 运行
     - cron: "0 1 * * *"
 
 permissions:
@@ -16,50 +15,58 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 检出代码
+      - name: Check out the code
         uses: actions/checkout@v4
 
-      - name: 设置 Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "latest"
 
-      - name: 缓存 Node.js 模块
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: 安装依赖
+      - name: Install dependencies
         run: |
+          npm uninstall -g @cloudflare/wrangler
+          npm install -g wrangler
           npm install -g javascript-obfuscator
 
-      - name: 克隆 BPB worker js
+      - name: Clone and Modify BPB workjs
         run: |
-          wget -O origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/refs/heads/main/build/unobfuscated-worker.js
+          echo "Starting download..."
+          curl -v -o origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/refs/heads/main/build/unobfuscated-worker.js || { echo "Download failed"; exit 1; }
+          echo "Download complete, modifying file..."
+          ls -l origin.js
+          if [ ! -s origin.js ]; then echo "origin.js is empty"; exit 1; fi
+          echo "const dummyVar1 = 'randomString' + Math.random();" >> origin.js
+          echo "const dummyVar2 = 42 * Math.random();" >> origin.js
+          sed -i 's/addEventListener("fetch"/addEventListener("f"/g' origin.js
+          sed -i 's/request/req/g' origin.js
+          cat origin.js
 
-      - name: 混淆 BPB worker js
+      - name: Obfuscate BPB worker js
         run: |
           javascript-obfuscator origin.js --output _worker.js \
-            --compact true \
-            --control-flow-flattening true \
-            --control-flow-flattening-threshold 0.75 \
-            --dead-code-injection true \
-            --dead-code-injection-threshold 0.4 \
-            --identifier-names-generator hexadecimal \
-            --rename-globals true \
-            --string-array true \
-            --string-array-encoding rc4 \
-            --string-array-threshold 0.75 \
-            --transform-object-keys true \
-            --unicode-escape-sequence true
+          --compact true \
+          --rename-globals false \
+          --string-array false
+          ls -l _worker.js
+          if [ ! -s _worker.js ]; then echo "_worker.js is empty, original file:"; cat origin.js; exit 1; fi
+          grep -i "addEventListener" _worker.js || { echo "No event listener found in _worker.js"; exit 1; }
 
-      - name: 提交更改
+      - name: Create wrangler.toml
+        run: |
+          echo 'name = "kjkx2025"' > wrangler.toml
+          echo 'compatibility_date = "2025-03-30"' >> wrangler.toml
+          echo 'main = "_worker.js"' >> wrangler.toml
+
+      - name: Validate Worker
+        run: |
+          npx wrangler deploy --dry-run
+
+      - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           branch: main
-          commit_message: ':arrow_up: 更新最新 BPB 面板'
+          commit_message: ':arrow_up: update latest bpb panel'
           commit_author: 'github-actions[bot] <github-actions[bot]@users.noreply.github.com>'
           push_options: '--set-upstream'
+          file_pattern: '_worker.js wrangler.toml'
