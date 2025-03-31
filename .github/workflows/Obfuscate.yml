@@ -31,9 +31,11 @@ jobs:
 
       - name: Clone BPB workjs
         run: |
-          curl -o origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/refs/heads/main/build/unobfuscated-worker.js
-          ls -l origin.js  # 确认文件生成
-          head -n 10 origin.js  # 输出文件开头，调试用
+          echo "Starting download..."
+          curl -v -o origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/refs/heads/main/build/unobfuscated-worker.js || { echo "Download failed"; exit 1; }
+          echo "Download complete, checking file..."
+          ls -l origin.js
+          head -n 10 origin.js
 
       - name: Pre-optimize BPB worker js
         run: |
@@ -63,4 +65,4 @@ jobs:
           commit_message: ':arrow_up: update latest bpb panel'
           commit_author: 'github-actions[bot] <github-actions[bot]@users.noreply.github.com>'
           push_options: '--set-upstream'
-          file_pattern: '_worker.js wrangler.toml'
+          file_pattern: '_worker.js wrangler.toml origin.js'  # 临时添加 origin.js
