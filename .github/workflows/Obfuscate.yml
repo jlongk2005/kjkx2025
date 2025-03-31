@@ -31,7 +31,9 @@ jobs:
 
       - name: Clone BPB workjs
         run: |
-          wget -O origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/refs/heads/main/build/unobfuscated-worker.js
+          curl -o origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/refs/heads/main/build/unobfuscated-worker.js
+          ls -l origin.js  # 确认文件生成
+          head -n 10 origin.js  # 输出文件开头，调试用
 
       - name: Pre-optimize BPB worker js
         run: |
