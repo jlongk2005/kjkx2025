@@ -47,10 +47,12 @@ jobs:
           --compact true \
           --identifier-names-generator hexadecimal \
           --rename-globals true
+          ls -l _worker.js
+          grep -i "addEventListener" _worker.js || { echo "No event listener found in _worker.js"; exit 1; }
 
       - name: Create wrangler.toml
         run: |
-          echo 'name = "bpb-panel"' > wrangler.toml
+          echo 'name = "kjkx2025"' > wrangler.toml
           echo 'compatibility_date = "2025-03-30"' >> wrangler.toml
           echo 'main = "_worker.js"' >> wrangler.toml
 
@@ -65,4 +67,4 @@ jobs:
           commit_message: ':arrow_up: update latest bpb panel'
           commit_author: 'github-actions[bot] <github-actions[bot]@users.noreply.github.com>'
           push_options: '--set-upstream'
-          file_pattern: '_worker.js wrangler.toml origin.js'  # 临时添加 origin.js
+          file_pattern: '_worker.js wrangler.toml'
